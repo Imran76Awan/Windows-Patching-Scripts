@@ -16,6 +16,14 @@ Built for the post-MDASH era — where Microsoft's AI vulnerability discovery sy
 | `Get-IntuneNonCompliantDevices.ps1` | List non-compliant devices with failing policy details; useful for triage after an out-of-band patch |
 | `Verify-HotpatchStatus.ps1` | Check which devices are hotpatch-eligible (Windows 11 24H2 Enterprise + VBS) vs. requiring a reboot-based patch |
 
+### [`get-fleet-servicing-channel-report/`](./get-fleet-servicing-channel-report/)
+
+| Script | Purpose |
+|--------|---------|
+| `Get-FleetServicingChannelReport.ps1` | Audit every Intune-managed Windows device for its servicing channel, flagging Enterprise LTSC (5-year lifecycle) vs IoT Enterprise LTSC (10-year). Read-only. Companion to [Windows 11 LTSC 2024: The 5-Year vs 10-Year Lifecycle Trap](https://endpointweekly.com/blog/windows-11-ltsc-2024-lifecycle-explained.html) |
+
+> **Not yet validated against a live tenant.** Test it in your own environment (or a non-production tenant) before relying on its output.
+
 ---
 
 ## Requirements
