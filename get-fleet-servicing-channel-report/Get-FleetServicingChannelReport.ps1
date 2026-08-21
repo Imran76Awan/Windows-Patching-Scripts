@@ -35,13 +35,24 @@
     (not delegated), with admin consent, and the certificate's private key installed in
     the local certificate store.
 
+.PARAMETER InstallModule
+    Consent, up front, to installing the required Microsoft.Graph.DeviceManagement
+    module from the PowerShell Gallery if it is missing.
+
+    By default this script does NOT install anything silently - if the module is
+    absent it tells you what it wants to install and asks. Pass this switch for
+    unattended runs (scheduled task, pipeline) where there is nobody to answer the
+    prompt; without it, an unattended run on a machine lacking the module will stop
+    rather than hang.
+
 .NOTES
     Requires the Microsoft.Graph.DeviceManagement PowerShell module.
     Permission required (read-only): DeviceManagementManagedDevices.Read.All
 
     Blog post: https://endpointweekly.com/blog/windows-11-ltsc-2024-lifecycle-explained.html
     Author:    Imran Awan
-    Version:   1.0
+    Version:   1.1  - prompts before installing the Graph module instead of
+                      installing it silently; added -InstallModule for unattended runs
 
     This script has NOT been validated against a live tenant. Please test it against
     your own environment (or a non-production tenant) before relying on its output.
@@ -57,6 +68,11 @@
 .EXAMPLE
     .\Get-FleetServicingChannelReport.ps1 -TenantId "xxxx" -ClientId "xxxx" -CertificateThumbprint "xxxx"
     Runs the audit using app-only certificate authentication, skipping interactive sign-in.
+
+.EXAMPLE
+    .\Get-FleetServicingChannelReport.ps1 -InstallModule -ExportCsv
+    Unattended run: consents to installing the Graph module if it is missing, so the
+    script never stops to ask, and exports the results to CSV.
 #>
 
 [CmdletBinding()]
@@ -65,15 +81,51 @@ param (
 
     [string]$TenantId,
     [string]$ClientId,
-    [string]$CertificateThumbprint
+    [string]$CertificateThumbprint,
+
+    [switch]$InstallModule
 )
 
 #region Prerequisites
 $requiredModule = 'Microsoft.Graph.DeviceManagement'
+
 if (-not (Get-Module -ListAvailable -Name $requiredModule)) {
-    Write-Host "Installing $requiredModule module..." -ForegroundColor Yellow
-    Install-Module -Name $requiredModule -Scope CurrentUser -Force
+
+    Write-Host "`nRequired module not found: $requiredModule" -ForegroundColor Yellow
+    Write-Host "This script needs it to query Microsoft Graph. Installing it would run:" -ForegroundColor Gray
+    Write-Host "    Install-Module -Name $requiredModule -Scope CurrentUser" -ForegroundColor Gray
+    Write-Host "which downloads from the PowerShell Gallery into your user profile only." -ForegroundColor Gray
+
+    $consent = $false
+    if ($InstallModule) {
+        Write-Host "`n-InstallModule was specified - proceeding without prompting." -ForegroundColor Cyan
+        $consent = $true
+    }
+    elseif ([Environment]::UserInteractive) {
+        $answer = Read-Host "`nInstall it now? [y/N]"
+        $consent = $answer -match '^\s*(y|yes)\s*$'
+    }
+    else {
+        Write-Host "`nRunning non-interactively, so there is nobody to ask." -ForegroundColor Red
+    }
+
+    if (-not $consent) {
+        Write-Host "`nAborting - nothing was installed and no changes were made." -ForegroundColor Red
+        Write-Host "Install the module yourself and re-run, or pass -InstallModule to consent up front:" -ForegroundColor Gray
+        Write-Host "    Install-Module -Name $requiredModule -Scope CurrentUser" -ForegroundColor Gray
+        exit 1
+    }
+
+    try {
+        Install-Module -Name $requiredModule -Scope CurrentUser -ErrorAction Stop
+        Write-Host "Installed $requiredModule." -ForegroundColor Green
+    } catch {
+        Write-Host "`nFailed to install ${requiredModule}: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "Aborting - install it manually and re-run." -ForegroundColor Red
+        exit 1
+    }
 }
+
 Import-Module $requiredModule -ErrorAction Stop
 
 $useAppOnlyAuth = $TenantId -and $ClientId -and $CertificateThumbprint
