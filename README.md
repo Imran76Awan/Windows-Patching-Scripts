@@ -24,6 +24,26 @@ Built for the post-MDASH era — where Microsoft's AI vulnerability discovery sy
 
 > **Not yet validated against a live tenant.** Test it in your own environment (or a non-production tenant) before relying on its output.
 
+**Parameters**
+
+| Parameter | Purpose |
+|---|---|
+| `-ExportCsv` | Write the LTSC devices found to a timestamped CSV next to the script |
+| `-InstallModule` | Consent up front to installing `Microsoft.Graph.DeviceManagement` if it is missing |
+| `-TenantId` / `-ClientId` / `-CertificateThumbprint` | Use app-only certificate auth instead of interactive sign-in |
+
+**On `-InstallModule`:** this script does **not** install anything silently. If `Microsoft.Graph.DeviceManagement` is missing, it tells you what it wants to install, shows you the exact command, and asks `[y/N]` before doing it. Declining exits without installing or changing anything.
+
+```powershell
+# Interactive - asks [y/N] if the Graph module is missing
+.\get-fleet-servicing-channel-report\Get-FleetServicingChannelReport.ps1 -ExportCsv
+
+# Unattended (scheduled task, pipeline) - consent up front so it never stops to ask
+.\get-fleet-servicing-channel-report\Get-FleetServicingChannelReport.ps1 -InstallModule -ExportCsv
+```
+
+Pass `-InstallModule` for any run where nobody is watching the console. Without it, a non-interactive run on a machine that lacks the module exits with the manual install command rather than hanging on a prompt nobody can answer.
+
 ---
 
 ## Requirements
