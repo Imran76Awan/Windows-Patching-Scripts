@@ -1,0 +1,39 @@
+# Generated script output - never commit these.
+#
+# The scripts in this repository are read-only diagnostics, but most of them
+# export their findings. That output contains real data from whichever tenant or
+# device the script was run against: device names, serial numbers, user names,
+# installed app inventory, compliance state and organisation-scale totals.
+#
+# Even when device and user names are masked, the software inventory and the
+# scale of the numbers still identify the organisation. This repository is
+# public, so generated output must stay local.
+#
+# Several scripts write into their own folder inside this working tree, so a
+# plain `git add .` would stage real data without any warning. For example:
+#   Get-FleetServicingChannelReport.ps1 -ExportCsv
+#     -> FleetServicingChannel-<timestamp>.csv, via Join-Path $PSScriptRoot
+#
+# To commit a deliberately sanitised example that one of these patterns blocks,
+# override per file with:  git add -f <path>
+
+# Report output folders
+reports/
+Reports/
+
+# CSV exports - most scripts take -ExportCsv or -OutputPath and default to
+# a .csv in the current directory or alongside the script
+*.csv
+
+# JSON payloads built from the local device's real app inventory
+# (Export-StartMenuPinConfig.ps1 defaults to .\ConfigureStartPins.json)
+ConfigureStartPins.json
+
+# Rendered HTML reports produced alongside the CSVs
+latest-*.html
+*-analysis.html
+*-report.html
+
+# Local scratch
+*.log
+*.tmp
