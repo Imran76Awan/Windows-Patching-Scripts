@@ -1,0 +1,739 @@
+WINDOWS PATCHING LAB BASELINE
+Reference measurements behind the EndpointWeekly 40-part Windows patching
+troubleshooting series (https://endpointweekly.com/blog.html).
+
+WHAT THIS IS
+  Read-only measurements taken from one live Windows 11 25H2 corporate device
+  (build 26200.9168) while researching the series, plus the documentation
+  contradictions and stale/incorrect published facts found along the way.
+  Nothing here modified the device. Every entry is either a measurement or a
+  citation.
+
+HOW TO READ IT
+  - Entries marked CORRECTION overturn an earlier claim in this same file.
+    Later entries win; the superseded text is kept so the reasoning is visible.
+  - Event and package COUNTS are point-in-time. Several grew between reads
+    during a single session (Event 26 went 210 -> 1,815). Treat every count as
+    "at time of measurement", never as a fixed value.
+  - Items labelled "observed, not documented" were measured on the device but
+    have no Microsoft reference page. Do not build compliance checks on them.
+  - Build numbers here are specific to one device and one month. The mechanisms
+    generalise; the numbers do not.
+
+PRIVACY
+  No machine name, user name, domain, serial number, IP address, tenant ID or
+  device ID appears in this file. The only GUIDs are Intune/Autopatch service
+  provider IDs, which are the same in every tenant.
+
+================================================================================
+
+REAL LAB BASELINE - captured read-only from a live Windows 11 25H2 corporate device
+Captured: 2026-08-23 10:43
+OS: Microsoft Windows 11 Enterprise build 26200
+UBR: 9168
+DisplayVersion: 25H2
+wuaueng.dll version: 1509.2607.1012.0
+
+*** CORRECTED VERSION FACTS (verified 2026-08-23, supersedes anything above) ***
+  Caption          : Microsoft Windows 11 Enterprise
+  DisplayVersion   : 25H2          <-- the device is REALLY on 25H2
+  CurrentBuild.UBR : 26200.9168
+  ProductName      : "Windows 10 Enterprise"  <-- REAL QUIRK: Windows 11 still reports
+                     "Windows 10" in this registry value. Scripts keying on ProductName
+                     to detect Windows 11 silently fail. Use CurrentBuild (>= 22000) or
+                     DisplayVersion instead.
+  Servicing stack  : 10.0.26100.9156 (note: 26100 stack on a 26200 build - normal)
+
+*** NOTABLE REAL FINDING - a pin that has been overtaken ***
+  Policy TargetReleaseVersionInfo = 24H2, but the installed DisplayVersion = 25H2.
+  The device is running a LATER release than the version it is pinned to. Do not
+  describe this device as "pinned to and sitting on 24H2" - that is not what the
+  data says. This mismatch is itself a legitimate diagnostic topic.
+
+*** BINARY LOCATION CORRECTION (verified from a real CBS.log line) ***
+  cbscore.dll is NOT in System32. Real log line:
+    "Loaded Servicing Stack v10.0.26100.9156 with Core: ...\cbscore.dll"
+  It lives in the versioned WinSxS servicing-stack component directory.
+  TrustedInstaller.exe FileDescription = "Windows Modules Installer"
+  TiWorker.exe        FileDescription = "Windows Modules Installer Worker"
+  poqexec.exe         FileDescription = "Primitive Operations Queue Executor"
+
+VERIFIED SERVICE STATES (default healthy baseline):
+  wuauserv=Running/Manual  bits=Running/Automatic  cryptsvc=Running/Automatic
+  trustedinstaller=Stopped/Manual (normal when idle)  msiserver=Stopped/Manual  UsoSvc=Running/Automatic  DoSvc=Running/Automatic
+
+VERIFIED POLICY STATE (WUfB-managed, no legacy AU):
+  HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\TargetReleaseVersion = 1
+  HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\TargetReleaseVersionInfo = 24H2
+  ...\WindowsUpdate\AU subkey: *** CORRECTED *** it EXISTS but has ZERO values
+    (Test-Path=True, ValueCount=0, SubKeyCount=0). It is NOT absent.
+    => 'AU subkey absent' is NOT a valid WUfB-vs-legacy discriminator. A Test-Path-only
+       check returns True on a device with no legacy AU policy at all. Test for SPECIFIC
+       values (UseWUServer, NoAutoUpdate, AUOptions) and report ValueCount instead.
+
+VERIFIED PENDING-REBOOT MARKERS (all False on a clean device):
+  CBS\RebootPending, WindowsUpdate\Auto Update\RebootRequired, Session Manager\PendingFileRenameOperations
+
+VERIFIED REAL EVENT IDs OBSERVED:
+  Setup log, Event 2  = Package <KB> successfully changed to the Staged state
+  Microsoft-Windows-WindowsUpdateClient/Operational, Event 26 = Windows Update successfully found N updates
+  Microsoft-Windows-WindowsUpdateClient/Operational, Event 41 = An update was downloaded
+
+DISM component store (real output):
+
+Deployment Image Servicing and Management tool
+Version: 10.0.26100.8972
+
+Image Version: 10.0.26200.9168
+
+
+[                           0.9%                           ] 
+
+[=                          2.6%                           ] 
+
+[==                         3.8%                           ] 
+
+[===                        5.2%                           ] 
+
+[===                        6.6%                           ] 
+
+[====                       7.8%                           ] 
+
+[=====                      8.8%                           ] 
+
+[=====                      10.1%                          ] 
+
+[======                     11.2%                          ] 
+
+[=======                    13.2%                          ] 
+
+[========                   15.1%                          ] 
+
+[=========                  16.4%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[=========                  17.2%                          ] 
+
+[==========                 18.4%                          ] 
+
+[==========                 18.4%                          ] 
+
+[==========                 18.4%                          ] 
+
+[==========                 18.4%                          ] 
+
+[==========                 18.4%                          ] 
+
+[==========                 18.4%                          ] 
+
+[==========                 18.4%                          ] 
+
+[==========                 18.4%                          ] 
+
+[==========                 18.4%                          ] 
+
+[==========                 18.4%                          ] 
+
+[==========                 18.4%                          ] 
+
+[==========                 18.5%                          ] 
+
+[==========                 18.5%                          ] 
+
+[==========                 18.5%                          ] 
+
+[==========                 18.5%                          ] 
+
+[==========                 18.5%                          ] 
+
+[==========                 18.8%                          ] 
+
+[===========                19.5%                          ] 
+
+[===========                19.5%                          ] 
+
+[===========                19.5%                          ] 
+
+[===========                19.5%                          ] 
+
+[===========                19.5%                          ] 
+
+[===========                19.5%                          ] 
+
+[===========                19.5%                          ] 
+
+[===========                19.5%                          ] 
+
+[===========                19.6%                          ] 
+
+[===========                20.6%                          ] 
+
+[=============              22.5%                          ] 
+
+[=============              23.7%                          ] 
+
+[==============             25.2%                          ] 
+
+[===============            26.9%                          ] 
+
+[================           27.8%                          ] 
+
+[================           29.3%                          ] 
+
+[=================          30.4%                          ] 
+
+[==================         31.3%                          ] 
+
+[==================         32.3%                          ] 
+
+[===================        33.7%                          ] 
+
+[====================       35.1%                          ] 
+
+[====================       36.2%                          ] 
+
+[=====================      37.3%                          ] 
+
+[=====================      37.9%                          ] 
+
+[======================     39.1%                          ] 
+
+[=======================    40.4%                          ] 
+
+[========================   41.8%                          ] 
+
+[========================   43.0%                          ] 
+
+[=========================  44.7%                          ] 
+
+[========================== 46.4%                          ] 
+
+[===========================48.2%                          ] 
+
+[===========================50.0%                          ] 
+
+[===========================51.7%                          ] 
+
+[===========================52.7%                          ] 
+
+[===========================54.5%                          ] 
+
+[===========================55.5%                          ] 
+
+[===========================56.5%                          ] 
+
+[===========================58.0%=                         ] 
+
+[===========================60.0%==                        ] 
+
+[===========================63.3%====                      ] 
+
+[===========================75.6%===========               ] 
+
+[===========================75.6%===========               ] 
+
+[===========================75.6%===========               ] 
+
+[===========================80.8%==============            ] 
+
+[===========================90.0%====================      ] 
+
+[===========================90.0%====================      ] 
+
+[===========================95.6%=======================   ] 
+
+[===========================97.9%========================  ] 
+
+[===========================97.9%========================  ] 
+
+[===========================97.9%========================  ] 
+
+[===========================97.9%========================  ] 
+
+[===========================97.9%========================  ] 
+
+[===========================97.9%========================  ] 
+
+[===========================97.9%========================  ] 
+
+[===========================97.9%========================  ] 
+
+[===========================97.9%========================  ] 
+
+[===========================97.9%========================  ] 
+
+[===========================97.9%========================  ] 
+
+[==========================100.0%==========================] 
+
+Component Store (WinSxS) information:
+
+Windows Explorer Reported Size of Component Store : 24.81 GB
+
+Actual Size of Component Store : 22.80 GB
+
+    Shared with Windows : 8.00 GB
+    Backups and Disabled Features : 14.79 GB
+    Cache and Temporary Data :  0 bytes
+
+Date of Last Cleanup : 2026-08-22 13:37:36
+
+Number of Reclaimable Packages : 21
+Component Store Cleanup Recommended : Yes
+
+The operation completed successfully.
+
+Get-HotFix (most recent 5):
+
+HotFixID  Description     InstalledOn
+--------  -----------     -----------
+KB5120708 Update          8/20/2026 12:00:00 AM
+KB5121003 Security Update 8/20/2026 12:00:00 AM
+KB5123304 Security Update 8/19/2026 12:00:00 AM
+KB5054156 Update          2/4/2026 12:00:00 AM
+
+*** VERIFIED BINARY / PATH FACTS (batch 1+2 findings - trust these over assumptions) ***
+  usocore.dll        : DOES NOT EXIST. Never reference it.
+  System32 USO DLLs  : usosvc.dll, usoapi.dll, usodocked.dll, usocoreps.dll
+  MoUsoCoreWorker.exe: C:\Windows\UUS\amd64   (NOT System32; UUS = Unified Update Stack,
+                       serviced independently of the OS build)
+  cbscore.dll        : versioned WinSxS servicing-stack component dir (NOT System32)
+  CbsCore.dll+TiWorker.exe : ...servicingstack... WinSxS component dir
+  TrustedInstaller.exe + CbsApi.dll : C:\Windows\servicing\
+  poqexec.exe        : FileDescription = "Primitive Operations Queue Executor"
+  TrustedInstaller.exe FileDescription = "Windows Modules Installer"
+  TiWorker.exe         FileDescription = "Windows Modules Installer Worker"
+  Agent vs OS version: wuaueng.dll = 1509.2607.1012.0 while OS = 10.0.26200.9168
+                       (the WU agent / UUS is versioned SEPARATELY from the OS build)
+
+*** VERIFIED LOGGING FACTS ***
+  C:\Windows\WindowsUpdate.log EXISTS but is a ~276-byte STUB pointing at
+    Get-WindowsUpdateLog. It is not the real log.
+  Real traces are ETW .etl under C:\Windows\Logs\WindowsUpdate\ (99 files / 42.5 MB observed).
+  ETW-based WU logging began in Windows 8.1 (NOT Windows 10).
+  Live ETW sessions observed: WindowsUpdate_trace_log, UpdateSessionOrchestration
+  Get-WindowsUpdateLog -ForceFlush STOPS the Update Orchestrator + Windows Update
+    services - never make it the first command in a diagnostic.
+  Microsoft's published component-tag list is INCOMPLETE; real decoded traces also
+    contain: WebServices, Deployment, Metadata, Shared, Reporter, SLS, Driver.
+  poqexec.log records queue CREATION/VALIDATION in the online session - it is NOT
+    proof a queue executed at boot. Observed 21x in 2 days on a device with NO
+    pending reboot, so it is not a pending-reboot signal either.
+
+*** VERIFIED PACKAGE / HISTORY GAP (great for compliance-reporting posts) ***
+  Get-HotFix returned only 4 entries (KB5120708, KB5121003, KB5123304, KB5054156)
+  while the real package inventory on the SAME device showed:
+    199 Superseded / 121 Installed / 95 Staged
+  Win32_QuickFixEngineering returns ONLY Component Based Servicing updates.
+
+*** VERIFIED SELF-REPAIR HISTORY (component store) ***
+  LifetimeTimesSuccessfullyRepaired = 5 ; PreviousCorruptionDetected = 2026-03-07 09:04:47 UTC
+  Corrupt = 0 ; AutoRepairNeeded = 0
+  43,198 .manifest files ; 7,490 .mum paired with exactly 7,490 .cat
+  Setup log Events 1013/1014 (provider Microsoft-Windows-Servicing) = corruption
+    detect/complete pair; "Detection Only: 1" distinguishes ScanHealth from RestoreHealth.
+  Setup Event 4 = "A reboot is necessary before package <KB> can be changed to the
+    Installed state" (real, observed for KB5120708).
+
+*** BRIEF CORRECTIONS - verified, supersede any conflicting instruction ***
+  Optional-component repair-source policy key is:
+    HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Servicing
+    (NOT ...\CurrentVersion\Servicing - that key does not exist on the device)
+    In-box C:\Windows\PolicyDefinitions\Servicing.admx declares exactly ONE element:
+    LocalSourcePath. The values RepairContentServerSource and UseWindowsUpdate are
+    NOT in any Microsoft doc or the shipped ADMX - community-sourced only.
+  Component-store cleanup (/StartComponentCleanup, /ResetBase) is NOT documented as
+    removing FoD payloads. Documented payload removal route = /Disable-Feature /Remove.
+    /ResetBase IS documented to remove all superseded component versions, and to make
+    installed updates permanently un-uninstallable.
+  On CLIENT editions, disabling a feature RETAINS the payload (removed only on Server,
+    or with an explicit /Remove).
+  WSUS cannot host FoDs at all (since 1709). From 1809: "FOD and language packs can
+    only be installed from Windows Update."
+  Add-WindowsCapability FAILS SILENTLY - no exception thrown on failure.
+  0x800F081F = CBS_E_SOURCE_MISSING. Microsoft documents it TWO contradictory ways:
+    the FoD table calls it a source problem; Windows Update common-errors calls the
+    cause "Component Store corruption" and gives the greppable string
+    "ResolveSource() unsuccessful".
+  Source resolution order: /Source -> Group Policy -> Windows Update (unless /LimitAccess).
+  Real capability census on the device: 369 NotPresent / 56 Installed.
+  CSI Payload Corruption: 0  <- the corruption-vs-absence discriminator in a CBS summary.
+  Microsoft publishes NO event-ID catalog for the Microsoft-Windows-Servicing provider,
+    but the provider MANIFEST on-device defines IDs 3, 5, 6, 15, 18/20, 1013, 1014, 1015
+    (including "payload removed" and "not applicable").
+
+*** CBS.log FORENSIC FACTS (post-01, all measured read-only) ***
+  CRITICAL INSIGHT: "Errors in CBS.log" does NOT mean the update failed.
+    Measured: a 73,450-line current CBS.log had 0 Error-level and 0 Warning-level lines,
+    while the ROTATED install-day log had 385 CSI Error + 330 SXS Error entries - and that
+    cumulative update SUCCEEDED. All 715 were 0x800f0983 from parallelhydrator.cpp, and each
+    was self-tagged [Warning,...] INSIDE the bracket. Never treat an Error count as a verdict.
+  CbsPersist_<stamp>.log/.cab : stamp is UTC and marks the END of the contents, not the start.
+    (Cab named ...174029 held 17:03:21 -> 18:40:03 local.) Rotation is TWO-STEP: rename first,
+    then a later "Maint:" pass cabs it.
+  Session ID format = SessionIdHigh_SessionIdLow (from the CBS registry key).
+    Measured on a HEALTHY device: 183 sessions initialized vs only 42 finalized.
+    => unfinalized sessions are NOT by themselves a failure signal.
+  TiWorker.exe is NOT in C:\Windows\servicing. That folder holds only:
+    TrustedInstaller.exe, CbsApi.dll, CbsMsg.dll, wrpintapi.dll.
+    TiWorker.exe + CbsCore.dll live in the versioned WinSxS servicingstack dir.
+  KB5123304 is the SERVICING STACK update (Package_for_ServicingStack_9156).
+    Stack version moved 8872 -> 9156 between logs.
+  certutil -error does NOT decode the CBS facility: works for 0x80073712, returns nothing
+    useful for 0x800f08xx. Do not recommend it as a universal decoder.
+  Documented grep technique (from Microsoft's 0x80070005 mitigation): findstr /c:", Error"
+  SFC writes its [SR] entries into CBS.log (documented).
+  Timestamp correlations proving cross-log linkage:
+    Setup Event 4 @ 18:37:47 == CBS "Reboot required: yes" @ 18:37:47
+    CBS "Maint: end archive logs" @ 13:37:35 == DISM "Date of Last Cleanup" 13:37:36
+
+*** AU SUBKEY - VERIFIED THREE TIMES, TRUST THIS ***
+  HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU
+    Test-Path = True | ValueCount = 0 | SubKeyCount = 0 | no properties
+  Parent ...\WindowsUpdate holds exactly two values: TargetReleaseVersion,
+  TargetReleaseVersionInfo.
+  NEVER write that the AU subkey is absent.
+
+*** MORE VERIFIED FACTS (posts 10/14/16) ***
+  usocore.dll is NOT in System32 OR SysWOW64 on 26200.9168. Confirmed twice.
+  0x80240438 : observed 11x in real Event 25 entries but NOT enumerated in Microsoft's
+    published error list. Do not assert a meaning for it.
+  KB5054156 = the Windows 11 25H2 ENABLEMENT PACKAGE (verified support.microsoft.com),
+    installed 2026-02-04. This is the mechanism that overtook the 24H2 pin.
+  KB5121003 = Aug 2026 LCU. KB5123304 = the SSU inside it
+    (Package_for_ServicingStack_9156). KB5120708 = .NET Framework 3.5/4.8.1 CU.
+  UBR TRAP (excellent compliance-script bug): KB5121003 is build 26200.9168 on 25H2 but
+    26100.9168 on 24H2 - SAME UBR, different build. A check of "UBR -ge 9168" WITHOUT
+    also pinning CurrentBuild passes a 24H2 device against a 25H2 baseline.
+  BuildLabEx = 26100.1.amd64fre.ge_release.240331-1435 - a 24H2 lab string on a 26200
+    build: forensic proof the device was INSTALLED as 24H2 and moved up later.
+  ReleaseId = 2009 (frozen at Win10 20H2 - useless for version detection).
+  Event 26 "found 0 updates" is NOT diagnostic: a fully-patched device and a device
+    excluded by a stale pin emit the IDENTICAL line.
+  netsh winhttp show proxy = "Direct access (no proxy server)"; advproxy shows
+    AutoDetect:true, PerUserProxySettings:true; wpad does not resolve.
+  wuauserv runs as svchost.exe -k netsvcs -p, LocalSystem, ServiceDll = wuaueng.dll.
+  This device's $MUSM.Services reports "Windows Store (Prod)" (docs say "DCat Prod").
+  24H2 Home/Pro end-of-updates = 2026-10-13 (dated, checkable consequence).
+  Intune doc quote: "Feature update policies don't downgrade devices."
+
+*** POST-24 FINDINGS - two of these CORRECT earlier baseline entries ***
+  SOLVED, why Servicing.admx has only ONE element: Microsoft documents that the
+    optional-component policy "was modified starting in Windows 11, version 24H2" with
+    two options REMOVED. Confirmed on device: Servicing.admx is 1,321 bytes, one element.
+  CORRECTION - language-pack date is 1803, NOT 1809:
+    1709 = FoDs could no longer come from WSUS; 1803 = language packs likewise;
+    1809 = "only from Windows Update" wording.
+  CORRECTION - "WSUS cannot host FoDs" IS NOW STALE for modern Windows:
+    from Windows 11 22H2, on-premises UUP made FoDs and language packs available from
+    WSUS again. The Add-WindowsCapability doc note saying otherwise is out of date.
+    Do NOT state the blanket "WSUS can never serve FoDs" claim for 22H2+.
+  Verbatim Microsoft quote (client vs server payload):
+    "Beginning with Windows 10, the payload is not removed from Windows client editions
+     in order to support Push-button reset. The payload is removed from Windows Server
+     installations."
+  NEW Test-Path trap: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Servicing
+    EXISTS on the device but contains ONLY CountryCode=GB - no LocalSourcePath. A script
+    testing key PRESENCE to infer "repair source configured" is wrong. (Same class of bug
+    as the AU-subkey and CBS-RebootPending-subkey traps.)
+  Capability census: 425 total / 369 NotPresent / 56 Installed.
+    Language.OCR~~~en-GB and en-US both Installed (corroborates the WinOcr-FOD-en-US
+    Setup Event 2 entry). WMIC~~~~ is Installed on 25H2 despite docs saying it is not
+    preinstalled from 24H2 - explains the en-US/en-GB WMIC satellite pair in the Setup log.
+  DISM provider split: CbsProvider.dll ("DISM Package Provider", 1,304,040 bytes) owns
+    capabilities; IntlProvider.dll ("DISM International Provider", 357,864 bytes) owns
+    languages. DismCore.dll is in System32\Dism\ (NOT System32).
+  0x800F0954: symbolic name appears ONLY in community sources, never on Microsoft Learn.
+    Use the documented 0x800F0906 / 0x800F0907 instead.
+  ReserveManager key (undocumented by Microsoft, read-only corroboration only):
+    HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ReserveManager
+    BaseHardReserveSize=5368709120 (5.00 GB), BaseSoftReserveSize=1610612736 (1.50 GB),
+    MinDiskSize=21474836480 (20 GB), ShippedWithReserves=1, PassedPolicy=1.
+    DO NOT recommend the ShippedWithReserves=0 registry hack.
+  DOC BUG: Set-WindowsReservedStorageState's documented example uses -Online, but the
+    cmdlet declares only State, LogPath, ScratchDirectory, LogLevel. -Online does not exist.
+  C:\Windows\Temp = 10,589.90 MB across 4,251 files while SoftwareDistribution\Download
+    = 0 bytes. Disk: 417.33 GB free / 951.65 GB total.
+  GIT BASH TRAP: DISM.exe /Online returns Error 87 under MSYS because /Online is rewritten
+    to a filesystem path. Use cmd.exe/PowerShell, or MSYS_NO_PATHCONV=1.
+
+*** POST-23: WHY StartComponentCleanup NEVER FINISHES ON A FLEET (documented) ***
+  Measured Event 328 @ 2026-08-21 21:51:37: "Task Scheduler stopped instance of task
+    \Microsoft\Windows\Servicing\StartComponentCleanup because computer is no longer
+    idle." Killed 6m14s in. NO Event 201 or 102 => it never completed.
+  ROOT CAUSE, documented: the task XML sets StopOnIdleEnd=true and RestartOnIdle=FALSE.
+    Microsoft: "To terminate and restart a task, BOTH properties and elements must be
+    set to True." Only one is set - so it terminates and never resumes.
+  Next night's run COMPLETED but did nothing. Real CBS.log chain:
+    Maint: launch type: ScheduledTask -> begin scavenge -> CSI "Store coherency cookie
+    matches last scavenge cookie, skipping scavenge" -> "scavenge time so far: 0 seconds"
+    -> "used space change: 1376 KiB, hr: S_OK". That 13-second no-op is what stamped
+    "Date of Last Cleanup : 2026-08-22 13:37:36" with LastTaskResult=0.
+    => a green task result does NOT mean cleanup happened.
+  Task internals: <Triggers /> is EMPTY - driven only by MaintenanceSettings P7D/P14D.
+    ExecutionTimeLimit PT1H (the documented 1-hour timeout, made visible).
+    DisallowStartIfOnBatteries=true.
+    Action is a COM handler, NOT an exe: CLSID {752073A1-...} "Component Based Servicing
+    Session" -> AppID {752073A2-...} "Trusted Installer Service", LocalService=TrustedInstaller.
+    Event 129 (process launch) appears 501x in that log and NEVER for this task.
+  LastResetBase_UTC is ABSENT on this device - Microsoft's one documented value here, so
+    its absence proves /ResetBase has never run. Good fleet-audit query.
+  wcp.dll = "Windows Componentization Platform Servicing API" (this IS CSI). Lives in the
+    versioned WinSxS servicing-stack dir, VERIFIED ABSENT from System32 - same pattern as
+    cbscore.dll.
+  Size arithmetic tie-out: reported 24.81 - actual 22.80 = 2.01 GB intra-WinSxS hard links;
+    actual 22.80 - shared 8.00 = 14.80 ~= overhead 14.79.
+
+*** THE FOUR "TEST-PATH LIES" (series through-line - 4 independent instances) ***
+  1. CBS RebootPending / PackagesPending = SUBKEYS not values. Get-ItemProperty check
+     returns "no reboot pending" permanently. Use GetSubKeyNames().
+  2. ...\WindowsUpdate\AU  : Test-Path True, ValueCount 0.
+  3. ...\CurrentVersion\Policies\Servicing : exists, holds ONLY CountryCode=GB.
+  4. ...\Policies\Microsoft\SystemCertificates\AuthRoot : Test-Path True, ValueCount 0,
+     SubKeyCount 3 (Certificates/CRLs/CTLs created regardless). DisableRootAutoUpdate absent.
+  RULE: on Windows policy hives, key existence carries almost no information. Test for the
+  specific VALUE and report ValueCount/SubKeyCount. Never Test-Path alone.
+
+*** POST-25 CRYPTO/TRUST FACTS ***
+  Microsoft's documented regsvr32 WU-reset list is 36 files; TWELVE DO NOT EXIST on 25H2:
+    msxml.dll, gpkcsp.dll, sccbase.dll, slbcsp.dll, initpki.dll, wuaueng1.dll, wucltui.dll,
+    wuweb.dll, qmgrprxy.dll, wucltux.dll, muweb.dll, wuwebv.dll
+    => the documented fix references phantom DLLs. Do not blindly script it.
+  catroot = 7,778 .cat / 208.8 MB (oldest catalog 2014-05-14). catroot2 holds only
+    catdb (133,169,152 bytes) + catdb.jfm. catroot2 is DERIVED; catroot is NOT.
+  catroot2\dberr.txt (UNDOCUMENTED - Q&A only, 10,703 bytes): 47 error lines vs 38 success
+    lines on a device where every August update installed. Decodes to shutdown-race noise:
+    0x426 ERROR_SERVICE_NOT_ACTIVE x16, 0x45b ERROR_SHUTDOWN_IN_PROGRESS x14, 0x57 x7,
+    0x6ba RPC_S_SERVER_UNAVAILABLE x6, 0x6b5 x4.  "Errors != verdict" again.
+  Root store: 73 certs, 14 ALREADY EXPIRED. CA store still holds Microsoft Code Signing
+    PCA 2011 expired 2026-07-08 - and updates install fine (Authenticode timestamp
+    countersignature). An "expired cert" alarm is NOT a finding.
+  cryptsvc runs as NT Authority\NetworkService (NOT LocalSystem), svchost -k NetworkService
+    -p, ServiceDll System32\cryptsvc.dll, sole dependency RpcSs. wuauserv is NOT among its
+    DependentServices.
+  wuaueng.dll real chain: SignatureType=Catalog -> Microsoft Windows (NotAfter 2026-10-17)
+    -> Microsoft Windows Production PCA 2011 (2026-10-19) -> Microsoft Root CA 2010 (2035).
+  Root CTL sync (binary FILETIME): LastSyncTime 2026-08-23 10:29:44 UTC;
+    PinRulesLastError = 0x2EFD (12029 connect failure) stamped 2026-07-30 - a STALE error
+    sitting beside a FRESH sync. Do not treat a stored error as current.
+  certutil -error BOUNDARY: decodes 0x800B / 0x8009 / WIN32 / WinHttp facilities cleanly,
+    but ECHOES BACK 0x8024xxxx (the WU facility). Its silence identifies the subsystem.
+  initpki.dll does NOT exist in System32. Verified: wintrust.dll 10.0.26100.8972,
+    softpub.dll 10.0.26100.9168, crypt32.dll, mssign32.dll.
+  CAPI2/Operational is DISABLED by default (IsEnabled: False), 1,052,672-byte cap, 74
+    events, message file crypt32.dll. Real task names: 10/11 Build Chain, 30 Verify Chain
+    Policy, 40/41/42 Verify Revocation, 80/81 Verify Trust, 82 Find Security Catalog for
+    File, 90 X509 Objects.
+
+*** POST-34: THE HOTPATCH BUILD INVERSION (counterintuitive - read carefully) ***
+  Microsoft shipped TWO packages on 11 Aug 2026 for the same releases:
+    KB5120994 (Hotpatch) -> 25H2 build 26200.9106, NO restart
+    KB5121003 (LCU)      -> 25H2 build 26200.9168, restart required
+  The HOTPATCHED device lands 62 REVISIONS LOWER than the rebooted one.
+  => In a hotpatch month, a HIGHER UBR is evidence the device did NOT get the hotpatch.
+  => "higher build = better patched" is FALSE during hotpatch months.
+  The lab device (26200.9168 + KB5121003) took the LCU path. Its naive delta
+    8875 -> 9168 (+293) turns compliance dashboards green for the WRONG reason.
+  Microsoft documents NO on-device "hotpatch is in effect" indicator for Windows CLIENT.
+    Microsoft's own word for the Settings check is "enrolled", not "applied". The only
+    place Microsoft asserts successful application is the Intune "Hotpatched" column.
+  Update/AllowRebootlessUpdates is NOT in the public Policy CSP - Update reference. It
+    appears only inside a diagnostic event payload. Do NOT script it as a CSP node.
+  No published event-ID catalogue for the hotpatch monitor - only a documented text
+    filter on "hotpatch".
+  DOCUMENTED silent fall-off: upgrading a device to a new Windows version DURING a
+    hotpatch month "switches the device to standard updates" until the next baseline.
+  HotPatchTableSize and the Hotpatch.amd64 enrolment key are Server 2022 Azure Edition
+    ISO guidance ONLY - unsupported drift if applied to Windows 11.
+  WARNING: Microsoft's Windows SERVER hotpatch page recommends Get-HotFix. That advice
+    is wrong for clients (4 rows vs 121 Installed packages on the same device).
+
+*** CORRECTIONS TO EARLIER BASELINE CLAIMS (posts 26/27/28/29) ***
+  ActiveHours are NOT absent from the device. That note holds only for the POLICY hive.
+    HKLM\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings has user-chosen ActiveHoursStart=8,
+    ActiveHoursEnd=0 = a 16-hour daily restart-suppression window INVISIBLE to any
+    policy-key audit.
+  There is NO fixed GUID for the offline scan service. The ID is GENERATED at registration
+    and read from $Svc.ServiceID. The required constant is ServerSelection = 3 (ssOthers).
+    Never publish a hardcoded offline-service GUID.
+
+*** TRAP #5 - IsWUfBConfigured lies ***
+  HKLM\SOFTWARE\Microsoft\WindowsUpdate\UpdatePolicy\PolicyState (18 values) is the agent's
+  RESOLVED verdict. Measured simultaneously on ONE device:
+    QualityUpdatesDeferralInDays=7, IsDeferralIsActive=1, but IsWUfBConfigured=0
+  => NEVER use IsWUfBConfigured as a "is this device WUfB-managed" test.
+  Also there: BranchReadinessLevel="CB" (a STRING, not the CSP integer),
+  TargetReleaseVersion=24H2, TargetProductVersion="Windows 11".
+
+*** TRAP #6 - the MDM WMI bridge silently returns DEFAULTS ***
+  As an ELEVATED ADMIN (not SYSTEM), MDM_Policy_Result01_Update02 returned every documented
+  default (AllowAutoUpdate=2, Defer=0, Deadline=7, Grace=2, MDMWinsOverGP=0) while the
+  registry actually held 6, 7, 30, 7, 1. NO ERROR was raised.
+  Microsoft documents the SYSTEM-context requirement; the silent-defaults fallback is
+  observed-not-documented. A script reading the bridge without SYSTEM gets plausible
+  fiction.
+
+*** THE POLICY AUDIT BLIND SPOT, MEASURED TWICE ***
+  Classic Policies\...\WindowsUpdate = 2 values. PolicyManager\current\device\Update = 25-65
+    values (both figures measured, at different times).
+  Classic ...\DeliveryOptimization key DOES NOT EXIST while 13 DO policies are in force.
+  ROOT CAUSE of the confusion: the DO Policy CSP page names
+    SOFTWARE\Policies\...\DeliveryOptimization as the "Group policy mapping -> Registry Key
+    Name" - i.e. the GPO TWIN's location, NOT where MDM lands the value.
+  PolicyManager\DEFAULT\Update holds the SCHEMA, not values (ValueCount=2, SubKeyCount=100).
+    Each policy subkey exposes lowrange / highrange / value(default) / GPBlockingRegKeyPath /
+    GPBlockingRegValueName / mergealgorithm / policytype.
+    TECHNIQUE: this is an ON-DEVICE authority for units and ranges. It resolves the docs'
+    0-30 vs 0-35 contradiction for DeferQualityUpdatesPeriodInDays (highrange=30).
+    SetActiveHours has NO schema subkey (ADMX-only, no CSP node).
+    ConfigureFeatureUpdateUninstallPeriod has an EMPTY GP-blocking name (MDM-only).
+
+*** HKLM\SOFTWARE\Microsoft\MDMWins - the GP<->CSP name map (observed, not documented) ***
+  Found via Events 2211/2213. 242 records, 13 in the Update area. Each holds Uri1 = the
+  OMA-URI that displaced the GP value. This is the authoritative GP-name<->CSP-name map.
+  KILLER EXAMPLE: CSP "AllowAutoUpdate" maps to GP value name "AUOptions" - so grepping the
+  classic hive for the CSP name could NEVER find it.
+  Suffixes _ProviderSet / _WinningProvider / _LastWrite are observed-not-documented.
+  Microsoft DOES document the PolicyManager layout (current\device\<Area> and
+    Providers\<GUID>\default\Device\<Area>) but ONLY on the client-side BitLocker
+    troubleshooting page, and only for BitLocker.
+
+*** THE 24H2 PIN IS NOT INTUNE'S (resolves an open question in this series) ***
+  current\device\Update\TargetReleaseVersion is EMPTY, _LastWrite present, _ProviderSet
+  ABSENT, and NO MDMWins record exists for it.
+  => the pin is a live, unshielded, NON-Intune value that is invisible in the portal.
+  Ghost-value signature verified independently via a full PauseQualityUpdatesStartTime
+  lifecycle (Events 814/2211/2213 on 08-19; 819/2204/2210/2216 on 08-20; record now gone).
+
+*** MEASURED EFFECTIVE CONFIG AND DEFERRAL MATH ***
+  defer-quality 7 + ConfigureDeadlineForQualityUpdates=30 + ConfigureDeadlineGracePeriod=7
+    => 37-DAY effective quality window against a portal-reported 7.
+  Pause ceilings: 35 days quality; legacy PauseFeatureUpdates boolean = 60 days.
+    Months-long holds come from Intune's Extend / resume-then-pause reset, AND from the
+    documented fact that DELETING A RING LEAVES ITS SETTINGS ON THE DEVICE.
+  Cleared-pause fingerprint: PauseQualityUpdatesStartTime present as an EMPTY STRING with
+    _LastWrite=1. Documented PausedQualityDate/PausedFeatureDate are ABSENT when never paused.
+  MDMWinsOverGP=1 under PolicyManager\current\device\ControlPolicyConflict.
+  TWO management authorities on this one device (_WinningProvider):
+    CFC160FB-1616-460F-9B6C-DCDB91DFEC83 (ring settings)
+    B04F44A4-B696-4B56-934A-C11667E944E4 (Autopatch-style *UpdateEnrolled nodes:
+      QualityUpdateEnrolled=0, FeatureUpdateEnrolled=1, DriverUpdateEnrolled=1)
+  AllowAutoUpdate=6 on device but the published CSP enumerates 0-5 ONLY. Record, do not
+    assert a meaning (same treatment as 0x80240438 and 0x86000002).
+  180 Error-level Event 404 events on a device the portal reports as HEALTHY.
+  Enrollment double-sourced: Enrollments ProviderID "MS DM Server" +
+    DiscoveryServiceFullURL = enrollment.manage.microsoft.com, confirmed by the sole
+    C:\ProgramData\Microsoft\DMClient folder name.
+
+*** EVENT COUNTS GROW BETWEEN READS - cite as "at time of measurement" ***
+  Microsoft-Windows-WindowsUpdateClient/Operational, ~2,176 records total.
+  Event 26 "found 0 updates": 210 -> 412 -> 555 -> 1,815 across successive reads.
+  Event 25 (0x80240438): 11 -> 20 -> 24.  Event 41: 40 -> 75 -> 110 -> 335.  Event 31: 2.
+
+*** POST-27 OFFLINE SCAN FACTS ***
+  wsusscn2.cab via fwlink 74689 -> catalog.s.download.windowsupdate.com,
+    Content-Length 665,982,392 (635 MiB), Last-Modified Tue 11 Aug 2026.
+  All 4 registered services report IsScanPackageService=False - the offline service does not
+    exist until AddScanPackageService creates it.
+  Instantiating the COM objects maps wuapi.dll (System32) + wusys.dll + wuapicore.dll from
+    C:\Windows\UUS\AMD64. wuaueng.dll never appears in-process.
+  COM: UpdateSession {4CB43D7F-...}, UpdateServiceManager {F8D253D9-...}, both
+    InProcServer32 = System32\wuapi.dll.
+  ...\WindowsUpdate\Services: DefaultService = 7971f918-... (Microsoft Update).
+  SERVICE-NAME DOC DISCREPANCY: Microsoft's sample maps 855E8A7C-...->DCAT and
+    117cab2d-...->STORE, but 25H2 names 855E8A7C-... "Windows Store (Prod)", never registers
+    117cab2d-..., and adds 8b24b027-... "DCat Flighting Prod".
+  Microsoft publishes a POSITIVE classification list for wsusscn2 and NO exclusion list -
+    state limits as inference, not as a quoted denial.
+  Get-WindowsPackage total re-verified: 415 (199 Superseded / 121 Installed / 95 Staged).
+
+*** POST-26 TIME FACTS ***
+  w32tm /query /source = "Local CMOS Clock" on a DOMAIN-JOINED device configured Type: NT5DS.
+    Leap Indicator: 3(not synchronized), Stratum: 0, Last Successful Sync Time: unspecified,
+    Last Sync Error: 1 (no time data available), Time since Last Good Sync: 4178.26s.
+  YET w32tm /stripchart vs time.windows.com showed only -1.879s to -1.899s offset.
+    => the clock was nearly RIGHT while the service had NEVER synced. Skew and sync-health
+    are different questions; check both.
+  System log Event 129 (Warning): "NtpClient was unable to set a domain peer ... The error
+    was: The entry is not found. (0x800706E1)". Event 158: VMICTimeProvider stopping,
+    "expected ... on non-HyperV-guest environments".
+  Time-Service/Operational census: 272x203, 263x173, 259x36 (source list AND chosen
+    reference both BLANK), 260x33, 257x30, 266x30, 264x25, 265x24, 261x23, 262x23.
+    NOTE: Event 272 is NOT in Microsoft's published 257-266 table.
+  w32tm /query /peers = "#Peers: 1" with a BLANK peer name stuck in Pending.
+  Registry: NtpServer = time.windows.com,0x9 ; MaxAllowedPhaseOffset 300 ;
+    MaxPos/NegPhaseCorrection 4294967295 ; SpecialPollInterval 3600 ; UtilizeSslTimeData 1.
+    HKLM\SOFTWARE\Policies\Microsoft\W32Time DOES NOT EXIST (no time GPO).
+  Kerberos "Maximum tolerance for computer clock synchronization" default = 5 MINUTES,
+    range 1-99999. KRB_AP_ERR_SKEW = 0x25.
+  0x80072F8F IS documented as clock-related ("SSL negotiation because of out-of-sync clock
+    settings or untrusted SSL certificates") - but the SAME article lists untrusted
+    WSUS/ConfigMgr certificates as the other cause, so it is NOT proof of skew.
+  certutil -error 0x80072F8F -> WinHttp 12175 ERROR_WINHTTP_SECURE_FAILURE "A security error
+    occurred"; 0x800B0101 -> CERT_E_EXPIRED "...not within its validity period when verifying
+    against the current system clock".
+  w32time.dll System32 745,472 bytes 10.0.26100.1 "Windows Time Service";
+    w32tm.exe "Windows Time Service Diagnostic Tool" (InternalName w32time.dll);
+    vmictimeprovider.dll present and Enabled=1 on PHYSICAL hardware.
+
+*** POST-35 WSUS SERVER-SIDE FACTS ***
+  WsusPool default Private Memory Limit = 1843200 KB. Recommended: Queue Length 2000,
+    Idle Time-out 0, Ping False, Private Memory 0, Regular Time Interval 0 (default 1740).
+  DOC DIVERGENCE between two CURRENT Microsoft docs: best-practices says Private Memory 0;
+    the messages/troubleshooting article says 4 GB (4000000 KB) rising to 8 GB. Flag it,
+    do not silently pick one.
+  Supersedence: documented 1,500-undeclined threshold. Cleanup Wizard's supersedence test is
+    five conditions (30 days on server / 90 days not deployed / superseding update approved).
+  Declined != Not approved: DECLINED updates are not offered for EVALUATION and only appear
+    in the console when the Declined filter is selected (corroborated by the
+    -Approval AnyExceptDeclined enum value).
+  Log paths: %Program Files%\Update Services\LogFiles\SoftwareDistribution.log ;
+    Application log for WsusUtil.exe checkhealth ; IIS default
+    %SystemDrive%\inetpub\logs\LogFiles.
+  DEPRECATION - state precisely: WSUS is deprecated, receives no new features, BUT is still
+    supported for production and still receives security and quality updates; the role is
+    still supported on Server 2016-2025. Do NOT claim it has been removed.
+  DOC QUIRK: Microsoft's error reference maps 0x80244020 to "HTTP 500" and 0x80244023 to
+    "HTTP 503" though the symbolic names are 501/504. Trust the symbolic name and correlate
+    against the real IIS sc-status.
+  WSUS Application-log event IDs (12002/12022/12032 family) exist ONLY in archived forum
+    threads, not current Microsoft docs - do not table them as documented.
+  Honest counterweight: Microsoft states "Computer hasn't reported status" is TYPICALLY a
+    client problem, not a server one.
