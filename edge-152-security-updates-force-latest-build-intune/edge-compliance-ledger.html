@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edge Compliance Ledger — EndpointWeekly</title>
+<meta name="description" content="Paste or upload the CSV from Get-EdgeUpdateComplianceReport.ps1 to see your fleet's Microsoft Edge patch state at a glance. Parsed entirely in your browser — nothing is uploaded.">
+<link rel="icon" href="data:,">
+<style>
+  html,body{margin:0;padding:0}
+  body{background:#f6f3ec}
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --paper:#f6f3ec;
+    --paper-2:#eee8da;
+    --ink:#211c14;
+    --ink-soft:#5c5344;
+    --line:#ddd4bf;
+    --line-soft:#e8e1d0;
+    --card:#fffdf8;
+    --accent:#a8571e;
+    --accent-soft:#f0decb;
+    --accent-ink:#7a3f14;
+    --good:#2f6b3f;
+    --good-bg:#e4f1e1;
+    --good-line:#bcdcb8;
+    --warn:#93650f;
+    --warn-bg:#faf1d8;
+    --warn-line:#e9d497;
+    --bad:#a3312a;
+    --bad-bg:#f8e2df;
+    --bad-line:#eab6ae;
+    --muted:#6b6455;
+    --muted-bg:#eee9dd;
+    --muted-line:#dcd4c0;
+    --shadow: 0 1px 2px rgba(33,28,20,.06), 0 8px 24px -12px rgba(33,28,20,.18);
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#171410;
+      --paper-2:#1f1b15;
+      --ink:#efe8d9;
+      --ink-soft:#b8ac93;
+      --line:#3a3226;
+      --line-soft:#2a251d;
+      --card:#1d1912;
+      --accent:#e08a3e;
+      --accent-soft:#3a2a17;
+      --accent-ink:#f3b784;
+      --good:#8fd39c;
+      --good-bg:#1c2b1e;
+      --good-line:#2f4a33;
+      --warn:#e8c257;
+      --warn-bg:#2e2712;
+      --warn-line:#4a3d19;
+      --bad:#e8938c;
+      --bad-bg:#2e1a18;
+      --bad-line:#4a2926;
+      --muted:#a89d89;
+      --muted-bg:#221e17;
+      --muted-line:#332c22;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#171410;
+    --paper-2:#1f1b15;
+    --ink:#efe8d9;
+    --ink-soft:#b8ac93;
+    --line:#3a3226;
+    --line-soft:#2a251d;
+    --card:#1d1912;
+    --accent:#e08a3e;
+    --accent-soft:#3a2a17;
+    --accent-ink:#f3b784;
+    --good:#8fd39c;
+    --good-bg:#1c2b1e;
+    --good-line:#2f4a33;
+    --warn:#e8c257;
+    --warn-bg:#2e2712;
+    --warn-line:#4a3d19;
+    --bad:#e8938c;
+    --bad-bg:#2e1a18;
+    --bad-line:#4a2926;
+    --muted:#a89d89;
+    --muted-bg:#221e17;
+    --muted-line:#332c22;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', -apple-system, Segoe UI, sans-serif;
+    font-size:14px;
+    line-height:1.5;
+  }
+  .mono{font-family:'IBM Plex Mono','SFMono-Regular',Consolas,monospace}
+  .tab{font-variant-numeric:tabular-nums}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 24px 64px}
+
+  /* ---- header ---- */
+  .hdr{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:24px;
+    padding-bottom:20px;border-bottom:1px solid var(--line);margin-bottom:22px;
+  }
+  .hdr-title{display:flex;align-items:center;gap:12px}
+  .mark{
+    width:34px;height:34px;border-radius:8px;background:var(--accent);color:var(--paper);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;
+    font-family:'IBM Plex Mono',monospace;flex:none;
+  }
+  h1{font-size:19px;font-weight:700;margin:0;letter-spacing:-.01em}
+  .sub{color:var(--ink-soft);font-size:12.5px;margin-top:2px}
+  .req-badge{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--accent-ink);
+    background:var(--accent-soft);border:1px solid var(--accent);border-radius:6px;
+    padding:5px 10px;white-space:nowrap;
+  }
+
+  /* ---- summary tiles ---- */
+  .tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px}
+  @media(max-width:860px){.tiles{grid-template-columns:repeat(2,1fr)}}
+  .tile{
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px;box-shadow:var(--shadow);
+  }
+  .tile .n{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+  .tile .l{font-size:11.5px;color:var(--ink-soft);margin-top:6px;text-transform:uppercase;letter-spacing:.04em}
+  .tile.total .n{color:var(--ink)}
+  .tile.good .n{color:var(--good)}
+  .tile.warn .n{color:var(--warn)}
+  .tile.bad .n{color:var(--bad)}
+  .tile.muted .n{color:var(--muted)}
+
+  /* ---- proportion bar ---- */
+  .propbar{
+    display:flex;height:10px;border-radius:999px;overflow:hidden;margin-bottom:22px;
+    border:1px solid var(--line);background:var(--paper-2);
+  }
+  .propbar span{height:100%;display:block}
+  .propbar .seg-good{background:var(--good)}
+  .propbar .seg-warn{background:var(--warn)}
+  .propbar .seg-bad{background:var(--bad)}
+  .propbar .seg-muted{background:var(--muted)}
+
+  /* ---- data intake panel ---- */
+  .intake{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;margin-bottom:22px;box-shadow:var(--shadow);
+  }
+  .intake-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .intake p{margin:0 0 12px;font-size:13px;color:var(--ink-soft)}
+  .intake code{background:var(--paper-2);padding:1px 6px;border-radius:4px;font-size:12px}
+  .btn{
+    font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;
+    border-radius:8px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);
+    background:var(--paper-2);color:var(--ink);transition:filter .12s;
+  }
+  .btn:hover{filter:brightness(0.97)}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff9f2}
+  .btn.ghost{background:transparent}
+  input[type=file]{display:none}
+  .sample-tag{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--warn);
+    background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:6px;
+    padding:3px 9px;
+  }
+
+  /* ---- controls ---- */
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .chip{
+    font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:999px;
+    border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;
+  }
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  :root[data-theme="dark"] .chip[aria-pressed="true"], @media (prefers-color-scheme:dark){ }
+  .search{
+    margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;
+    border:1px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:8px;padding:7px 12px;min-width:220px;
+  }
+  .search:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+  /* ---- table ---- */
+  .tablewrap{
+    border:1px solid var(--line);border-radius:12px;overflow:auto;background:var(--card);
+    box-shadow:var(--shadow);
+  }
+  table{border-collapse:collapse;width:100%;min-width:920px}
+  thead th{
+    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--ink-soft);padding:10px 14px;border-bottom:1px solid var(--line);
+    background:var(--paper-2);position:sticky;top:0;white-space:nowrap;
+  }
+  tbody td{padding:10px 14px;border-bottom:1px solid var(--line-soft);font-size:13px;vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:var(--paper-2)}
+  td.dev{font-family:'IBM Plex Mono',monospace;font-weight:600;white-space:nowrap}
+  td.ver{font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+  td.ver .mismatch{color:var(--bad);font-weight:600}
+  td.reason{color:var(--ink-soft);max-width:360px;font-size:12.5px;line-height:1.5}
+  .pill{
+    display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;
+    padding:3px 10px;border-radius:999px;white-space:nowrap;font-family:'IBM Plex Mono',monospace;
+    text-transform:uppercase;letter-spacing:.03em;
+  }
+  .pill.good{background:var(--good-bg);color:var(--good);border:1px solid var(--good-line)}
+  .pill.warn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line)}
+  .pill.bad{background:var(--bad-bg);color:var(--bad);border:1px solid var(--bad-line)}
+  .pill.muted{background:var(--muted-bg);color:var(--muted);border:1px solid var(--muted-line)}
+  .svcdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+  .svc-run{background:var(--good)}
+  .svc-stop{background:var(--bad)}
+
+  .empty{padding:48px 24px;text-align:center;color:var(--ink-soft)}
+  .foot{margin-top:16px;font-size:11.5px;color:var(--ink-soft);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .foot a{color:var(--accent-ink)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="hdr">
+    <div class="hdr-title">
+      <div class="mark">e</div>
+      <div>
+        <h1>Edge Compliance Ledger</h1>
+        <div class="sub">Paste or upload the CSV from <code class="mono">Get-EdgeUpdateComplianceReport.ps1</code> to see every device's real state, in your browser only.</div>
+      </div>
+    </div>
+    <div class="req-badge tab" id="reqBadge">Required build: 152.0.4191.66</div>
+  </div>
+
+  <div class="tiles" id="tiles">
+    <div class="tile total"><div class="n tab" id="tTotal">0</div><div class="l">Devices</div></div>
+    <div class="tile good"><div class="n tab" id="tGood">0</div><div class="l">Compliant</div></div>
+    <div class="tile warn"><div class="n tab" id="tWarn">0</div><div class="l">Needs relaunch</div></div>
+    <div class="tile bad"><div class="n tab" id="tBad">0</div><div class="l">Non-compliant</div></div>
+    <div class="tile muted"><div class="n tab" id="tErr">0</div><div class="l">Errors / unknown</div></div>
+  </div>
+
+  <div class="propbar" id="propbar" title="Verdict breakdown"></div>
+
+  <div class="intake">
+    <p>Run the script across your fleet (Intune platform script, RMM, or a scheduled task per device) with <code>-ExportCsv</code>, combine the per-device CSVs into one file, then load it here. Nothing is uploaded anywhere — parsing happens entirely in this page.</p>
+    <div class="intake-row">
+      <label class="btn primary" for="fileInput">Upload CSV</label>
+      <input type="file" id="fileInput" accept=".csv,text/csv">
+      <button class="btn" id="pasteBtn">Paste CSV text</button>
+      <button class="btn ghost" id="copyCmdBtn">Copy fleet-run command</button>
+      <button class="btn ghost" id="loadSampleBtn">Load example data</button>
+      <span class="sample-tag" id="sampleTag" hidden>Showing example data</span>
+    </div>
+  </div>
+
+  <div class="controls" id="controls" hidden>
+    <button class="chip" data-filter="all" aria-pressed="true">All</button>
+    <button class="chip" data-filter="Compliant" aria-pressed="false">Compliant</button>
+    <button class="chip" data-filter="NeedsRelaunch" aria-pressed="false">Needs relaunch</button>
+    <button class="chip" data-filter="NonCompliant" aria-pressed="false">Non-compliant</button>
+    <button class="chip" data-filter="Error" aria-pressed="false">Errors</button>
+    <input class="search mono" id="searchBox" type="text" placeholder="Search device or reason…">
+  </div>
+
+  <div class="tablewrap" id="tableWrap">
+    <div class="empty" id="emptyState">Load a CSV, or click "Load example data" to see the shape of it first.</div>
+  </div>
+
+  <div class="foot">
+    <span id="rowCount"></span>
+    <span>Reference: <a href="https://endpointweekly.com/blog/edge-152-security-updates-force-latest-build-intune.html" target="_blank" rel="noopener">Microsoft Edge 152 — force &amp; verify the latest build via Intune</a></span>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const SAMPLE_CSV = [
+    '"ComputerName","CheckedAt","InstalledVersion","RunningVersion","CompliantVersion","Verdict","EdgeUpdateServiceStatus","EdgeUpdateServiceStartType","EdgeUpdateMServiceStatus","UpdateTaskState","UpdateDefault","TargetChannel","TargetVersionPrefix","RelaunchNotification","RelaunchNotificationPeriod","Reasons"',
+    '"FIN-LT-0231","2026-09-05 09:12:04","152.0.4191.66","152.0.4191.66","152.0.4191.66","Compliant","Stopped","Automatic","Stopped","Ready","","","","","",""',
+    '"FIN-LT-0244","2026-09-05 09:14:51","152.0.4191.66","152.0.4191.62","152.0.4191.66","NeedsRelaunch","Stopped","Automatic","Stopped","Ready","","","","","","Update to 152.0.4191.66 is installed but the running browser is still on 152.0.4191.62 - relaunch required"',
+    '"SALES-LT-0087","2026-09-05 09:15:22","152.0.4191.62","152.0.4191.62","152.0.4191.66","NonCompliant","Stopped","Disabled","Stopped","Ready","","","","","","edgeupdate service start type is \'Disabled\' - the device will not check for new Edge versions | Installed version 152.0.4191.62 is behind the required 152.0.4191.66"',
+    '"SALES-LT-0093","2026-09-05 09:16:03","152.0.4191.66","152.0.4191.66","152.0.4191.66","Compliant","Stopped","Automatic","Stopped","Ready","","","","","",""',
+    '"ENG-WS-0012","2026-09-05 09:17:41","152.0.4191.62","152.0.4191.62","152.0.4191.66","NonCompliant","Stopped","Automatic","Stopped","Ready","","beta","","","","TargetChannel is set to \'beta\' - not stable or extended. Confirm this is intentional and not a leftover pilot policy | Installed version 152.0.4191.62 is behind the required 152.0.4191.66"',
+    '"ENG-WS-0019","2026-09-05 09:18:12","151.0.3733.4","151.0.3733.4","152.0.4191.66","NonCompliant","Stopped","Automatic","Stopped","Ready","","","151.0.3733.4","","","TargetVersionPrefix is pinning this device to version \'151.0.3733.4\' - it will not update past this version while the policy remains | Installed version 151.0.3733.4 is behind the required 152.0.4191.66"',
+    '"HR-LT-0005","2026-09-05 09:19:00","","","152.0.4191.66","Error","","","","","","","","","","msedge.exe not found at the expected path"'
+  ].join("\n");
+
+  let rows = [];
+  let activeFilter = "all";
+
+  function parseCsv(text){
+    if (text.charCodeAt(0) === 0xFEFF) { text = text.slice(1); }
+    text = text.replace(/\r\n/g, "\n");
+    const lines = [];
+    let field = "", row = [], inQuotes = false, i = 0;
+    while (i < text.length){
+      const c = text[i];
+      if (inQuotes){
+        if (c === '"'){
+          if (text[i+1] === '"'){ field += '"'; i += 2; continue; }
+          inQuotes = false; i++; continue;
+        }
+        field += c; i++; continue;
+      } else {
+        if (c === '"'){ inQuotes = true; i++; continue; }
+        if (c === ','){ row.push(field); field = ""; i++; continue; }
+        if (c === '\n'){ row.push(field); lines.push(row); row = []; field = ""; i++; continue; }
+        field += c; i++; continue;
+      }
+    }
+    if (field.length || row.length){ row.push(field); lines.push(row); }
+    if (!lines.length) return [];
+    const headers = lines[0].map(h => h.trim());
+    const out = [];
+    for (let r = 1; r < lines.length; r++){
+      if (lines[r].length === 1 && lines[r][0] === "") continue;
+      const obj = {};
+      headers.forEach((h, idx) => { obj[h] = (lines[r][idx] || "").trim(); });
+      out.push(obj);
+    }
+    return out;
+  }
+
+  function verdictBucket(v){
+    if (v === "Compliant") return "good";
+    if (v === "NeedsRelaunch") return "warn";
+    if (v === "NonCompliant") return "bad";
+    return "muted";
+  }
+
+  function render(){
+    const counts = { Compliant:0, NeedsRelaunch:0, NonCompliant:0, Error:0 };
+    rows.forEach(r => {
+      const v = r.Verdict || "Error";
+      if (counts[v] === undefined) counts.Error++; else counts[v]++;
+    });
+    const total = rows.length;
+    document.getElementById("tTotal").textContent = total;
+    document.getElementById("tGood").textContent = counts.Compliant;
+    document.getElementById("tWarn").textContent = counts.NeedsRelaunch;
+    document.getElementById("tBad").textContent = counts.NonCompliant;
+    document.getElementById("tErr").textContent = counts.Error;
+
+    const bar = document.getElementById("propbar");
+    bar.innerHTML = "";
+    if (total > 0){
+      [["seg-good",counts.Compliant],["seg-warn",counts.NeedsRelaunch],["seg-bad",counts.NonCompliant],["seg-muted",counts.Error]]
+        .forEach(([cls,n]) => {
+          if (n <= 0) return;
+          const seg = document.createElement("span");
+          seg.className = cls;
+          seg.style.width = (n/total*100) + "%";
+          bar.appendChild(seg);
+        });
+    }
+
+    const term = (document.getElementById("searchBox").value || "").toLowerCase();
+    let visible = rows;
+    if (activeFilter !== "all"){
+      visible = visible.filter(r => (r.Verdict || "Error") === activeFilter || (activeFilter === "Error" && counts[r.Verdict] === undefined));
+    }
+    if (term){
+      visible = visible.filter(r =>
+        (r.ComputerName||"").toLowerCase().includes(term) ||
+        (r.Reasons||"").toLowerCase().includes(term)
+      );
+    }
+
+    const wrap = document.getElementById("tableWrap");
+    const empty = document.getElementById("emptyState");
+    document.getElementById("controls").hidden = total === 0;
+
+    if (total === 0){
+      wrap.innerHTML = "";
+      wrap.appendChild(empty);
+      document.getElementById("rowCount").textContent = "";
+      return;
+    }
+
+    document.getElementById("rowCount").textContent = visible.length + " of " + total + " devices shown";
+
+    if (visible.length === 0){
+      wrap.innerHTML = '<div class="empty">No devices match this filter.</div>';
+      return;
+    }
+
+    const table = document.createElement("table");
+    table.innerHTML =
+      '<thead><tr>' +
+      '<th>Device</th><th>Verdict</th><th>Installed</th><th>Running</th>' +
+      '<th>EdgeUpdate service</th><th>Task</th><th>Reasons</th>' +
+      '</tr></thead>';
+    const tbody = document.createElement("tbody");
+
+    visible.forEach(r => {
+      const verdict = r.Verdict || "Error";
+      const bucket = verdictBucket(verdict);
+      const label = verdict === "NeedsRelaunch" ? "Needs relaunch" : verdict === "NonCompliant" ? "Non-compliant" : verdict;
+      const mismatch = r.InstalledVersion && r.RunningVersion && r.InstalledVersion !== r.RunningVersion;
+      // edgeupdate is trigger-started: Status = Stopped between checks is
+      // normal, not a fault. StartType is the real health signal - only
+      // "Disabled" means the device can't check for updates on its own.
+      const svcHealthy = r.EdgeUpdateServiceStartType !== "Disabled";
+      const svcLabel = r.EdgeUpdateServiceStartType
+        ? r.EdgeUpdateServiceStartType + " (" + (r.EdgeUpdateServiceStatus || "—") + ")"
+        : (r.EdgeUpdateServiceStatus || "—");
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td class="dev">' + escapeHtml(r.ComputerName || "—") + '</td>' +
+        '<td><span class="pill ' + bucket + '">' + escapeHtml(label) + '</span></td>' +
+        '<td class="ver tab">' + escapeHtml(r.InstalledVersion || "—") + '</td>' +
+        '<td class="ver tab' + (mismatch ? '' : '') + '"><span class="' + (mismatch ? 'mismatch' : '') + '">' + escapeHtml(r.RunningVersion || "—") + '</span></td>' +
+        '<td><span class="svcdot ' + (svcHealthy ? 'svc-run' : 'svc-stop') + '"></span>' + escapeHtml(svcLabel) + '</td>' +
+        '<td>' + escapeHtml(r.UpdateTaskState || "—") + '</td>' +
+        '<td class="reason">' + escapeHtml(r.Reasons || "—") + '</td>';
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.innerHTML = "";
+    wrap.appendChild(table);
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  function loadCsvText(text, isSample){
+    rows = parseCsv(text);
+    document.getElementById("sampleTag").hidden = !isSample;
+    if (!isSample){
+      try { localStorage.setItem("edgeLedgerCsv", text); } catch(e) {}
+    }
+    render();
+  }
+
+  document.getElementById("fileInput").addEventListener("change", function(e){
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => loadCsvText(String(reader.result), false);
+    reader.readAsText(f);
+  });
+
+  document.getElementById("pasteBtn").addEventListener("click", function(){
+    const text = window.prompt("Paste the CSV contents:");
+    if (text) loadCsvText(text, false);
+  });
+
+  document.getElementById("loadSampleBtn").addEventListener("click", function(){
+    loadCsvText(SAMPLE_CSV, true);
+  });
+
+  document.getElementById("copyCmdBtn").addEventListener("click", function(){
+    const cmd = ".\\Get-EdgeUpdateComplianceReport.ps1 -ExportCsv -CsvPath \"\\\\fileserver\\share\\EdgeCompliance\\$env:COMPUTERNAME.csv\"";
+    const btn = this;
+    const original = btn.textContent;
+    function done(ok){ btn.textContent = ok ? "Copied" : "Copy failed"; setTimeout(()=>{btn.textContent = original;}, 1600); }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(cmd).then(()=>done(true)).catch(()=>done(false));
+    } else { done(false); }
+  });
+
+  document.querySelectorAll(".chip").forEach(chip => {
+    chip.addEventListener("click", function(){
+      document.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed","false"));
+      this.setAttribute("aria-pressed","true");
+      activeFilter = this.dataset.filter;
+      render();
+    });
+  });
+
+  document.getElementById("searchBox").addEventListener("input", render);
+
+  // Resume the last real (non-sample) upload if one exists in this browser,
+  // otherwise show example data so the page never opens empty.
+  let resumed = false;
+  try {
+    const saved = localStorage.getItem("edgeLedgerCsv");
+    if (saved) { loadCsvText(saved, false); resumed = true; }
+  } catch(e) {}
+  if (!resumed) { loadCsvText(SAMPLE_CSV, true); }
+})();
+</script>
+
+</body>
+</html>
