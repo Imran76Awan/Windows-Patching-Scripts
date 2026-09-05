@@ -77,11 +77,16 @@ try {
         $Issues.Add("Running version $RunningVersion is behind the required $CompliantVersion (relaunch may be pending)")
     }
 
-    ## --- EdgeUpdate service state ---
+    ## --- EdgeUpdate service configuration ---
+    ## edgeupdate is trigger-started: it starts, checks for updates, and stops
+    ## again within seconds. Seeing Status = Stopped is NORMAL and not a fault -
+    ## only a Disabled start type (or the service being missing entirely) means
+    ## the device genuinely cannot check for updates on its own.
     $svc = Get-Service -Name "edgeupdate" -ErrorAction SilentlyContinue
-    if (-not $svc -or $svc.Status -ne "Running") {
-        $status = if ($svc) { $svc.Status } else { "NotFound" }
-        $Issues.Add("edgeupdate service is '$status', expected 'Running'")
+    if (-not $svc) {
+        $Issues.Add("edgeupdate service not found - Edge does not appear to be installed via EdgeUpdate")
+    } elseif ($svc.StartType -eq "Disabled") {
+        $Issues.Add("edgeupdate service start type is 'Disabled' - the device cannot check for new Edge versions until this is changed")
     }
 
     ## --- Update scheduled task state ---

@@ -113,18 +113,26 @@ try {
     $Reasons.Add("Could not read msedge.exe file version: $_")
 }
 
-## --- 3. EdgeUpdate service state ---
-$EdgeUpdateServiceStatus  = $null
-$EdgeUpdateMServiceStatus = $null
+## --- 3. EdgeUpdate service configuration ---
+## edgeupdate is trigger-started: it starts, checks for updates, and stops
+## again within seconds. Status = Stopped is NORMAL and not a fault on its
+## own - only a Disabled start type means the device genuinely cannot check
+## for updates. StartType is the health signal here, not the live Status.
+$EdgeUpdateServiceStatus    = $null
+$EdgeUpdateServiceStartType = $null
+$EdgeUpdateMServiceStatus   = $null
 try {
     $svc = Get-Service -Name "edgeupdate" -ErrorAction SilentlyContinue
-    $EdgeUpdateServiceStatus = if ($svc) { $svc.Status.ToString() } else { "NotFound" }
+    $EdgeUpdateServiceStatus    = if ($svc) { $svc.Status.ToString() } else { "NotFound" }
+    $EdgeUpdateServiceStartType = if ($svc) { $svc.StartType.ToString() } else { "NotFound" }
 
     $svcM = Get-Service -Name "edgeupdatem" -ErrorAction SilentlyContinue
     $EdgeUpdateMServiceStatus = if ($svcM) { $svcM.Status.ToString() } else { "NotFound" }
 
-    if ($EdgeUpdateServiceStatus -ne "Running") {
-        $Reasons.Add("edgeupdate service is '$EdgeUpdateServiceStatus', expected 'Running' - the device will not check for new Edge versions")
+    if (-not $svc) {
+        $Reasons.Add("edgeupdate service not found - the device will not check for new Edge versions")
+    } elseif ($EdgeUpdateServiceStartType -eq "Disabled") {
+        $Reasons.Add("edgeupdate service start type is 'Disabled' - the device will not check for new Edge versions")
     }
 } catch {
     $Reasons.Add("Could not query the edgeupdate/edgeupdatem services: $_")
@@ -216,6 +224,7 @@ $Result = [PSCustomObject]@{
     CompliantVersion             = $CompliantVersion
     Verdict                      = $Verdict
     EdgeUpdateServiceStatus      = $EdgeUpdateServiceStatus
+    EdgeUpdateServiceStartType   = $EdgeUpdateServiceStartType
     EdgeUpdateMServiceStatus     = $EdgeUpdateMServiceStatus
     UpdateTaskState              = $UpdateTaskState
     UpdateDefault                = $UpdateDefaultValue

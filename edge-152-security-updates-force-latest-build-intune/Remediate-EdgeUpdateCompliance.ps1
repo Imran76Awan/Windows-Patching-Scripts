@@ -48,24 +48,23 @@ Start-Transcript -Path "$LogDir\EdgeUpdateRemediation.log" -Append -Force
 try {
     $HadError = $false
 
-    ## --- Ensure the edgeupdate service is set to auto-start and running ---
-    Write-Host "Checking edgeupdate service..."
+    ## --- Ensure the edgeupdate service is not disabled ---
+    ## edgeupdate is trigger-started: it runs briefly to check for updates and
+    ## then stops again on its own, so Status = Stopped is normal and is NOT
+    ## corrected here. Only a Disabled start type actually stops the device
+    ## from checking for updates, so that is the only state fixed below.
+    Write-Host "Checking edgeupdate service start type..."
     try {
         $svc = Get-Service -Name "edgeupdate" -ErrorAction Stop
 
-        if ($svc.StartType -ne "Automatic") {
+        if ($svc.StartType -eq "Disabled") {
             Set-Service -Name "edgeupdate" -StartupType Automatic -ErrorAction Stop
-            Write-Host "  Set edgeupdate startup type to Automatic (was $($svc.StartType))"
-        }
-
-        if ($svc.Status -ne "Running") {
-            Start-Service -Name "edgeupdate" -ErrorAction Stop
-            Write-Host "  Started edgeupdate service (was $($svc.Status))"
+            Write-Host "  Set edgeupdate startup type to Automatic (was Disabled)"
         } else {
-            Write-Host "  edgeupdate already Running"
+            Write-Host "  edgeupdate start type is $($svc.StartType) - no change needed"
         }
     } catch {
-        Write-Host "  ERROR: could not check/start edgeupdate service: $_"
+        Write-Host "  ERROR: could not check/fix the edgeupdate service start type: $_"
         $HadError = $true
     }
 
